@@ -44,7 +44,7 @@ GRect initPaddle(GWindow window);
 GLabel initScoreboard(GWindow window);
 void updateScoreboard(GWindow window, GLabel label, int points);
 GObject detectCollision(GWindow window, GOval ball);
-void statusGame(GWindow window, int lives);
+bool statusGame(GWindow window, int lives, int bricks);
 
 int main(void)
 {
@@ -103,8 +103,7 @@ int main(void)
     // keep playing until game over
     while (lives > 0 && bricks > 0)
     {
-        updateScoreboard(window, label, points);
-        
+        updateScoreboard(window, label, points);    
         //check for mouse events
         GEvent event = getNextEvent(MOUSE_EVENT);
         
@@ -165,24 +164,31 @@ int main(void)
                 angle_vel = -angle_vel;
                 removeGWindow(window, object);
                 points++;
+                bricks--;
             }
+            
         }
         
         //linger before moving again
-        pause(1);
+        pause(1.5);
         
         //check if a life was lost, and reset the game on Click
         if (paused == 1)
         {
-            waitForClick();
+            
+            waitForClick();    
             paused = 0;
             velocity = random;
             angle_vel = 1;
         }       
     }
     
-    // checking if the game was won or lost
-    statusGame(window, lives);
+    updateScoreboard(window, label, points);
+    
+    // checking if the game was won or lost, update scoreboard to 50
+    statusGame(window, lives, bricks);
+    if (statusGame(window, lives, bricks))
+        updateScoreboard(window, label, COLS * ROWS);
     
     // wait for click before exiting
     waitForClick();
@@ -271,34 +277,34 @@ void updateScoreboard(GWindow window, GLabel label, int points)
 /**
  * Adds final label: Won or Lost.
  */
-void statusGame(GWindow window, int lives)
+bool statusGame(GWindow window, int lives, int bricks)
 {    
     GLabel label = newGLabel(" ");
     setFont(label, "SansSerif-36");
     add(window, label);
   
     // allocate memory for appropriate string
-    if (lives > 0)
+    if (lives >= 0 && bricks == 0)
     {
         // update label
         setLabel(label, "You Won");
         setColor(label, "GREEN");
-        
+        // center label
+        setLocation(label, WIDTH / 2 - getWidth(label) / 2, 200);
+        waitForClick();
+        return true;    
     }   
     else 
     {
         // update label
         setLabel(label, "You Lost");
         setColor(label, "RED");
-        
+        // center label
+        setLocation(label, WIDTH / 2 - getWidth(label) / 2, 200);
+        waitForClick();
+        return false;
     } 
     
-    // center label
-    double x = WIDTH / 2 - getWidth(label) / 2;
-    double y = 200;
-    
-    setLocation(label, x, y);
-    waitForClick();
 }
 
 /**
